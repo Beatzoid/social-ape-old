@@ -1,7 +1,7 @@
 import * as functions from "firebase-functions";
 
 const app = require("express")();
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 
 import admin from "firebase-admin";
 admin.initializeApp();
@@ -19,7 +19,7 @@ const isEmail = (email: String) =>
         /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
     );
 
-app.get("/screams", (req: Request, res: Response) => {
+app.get("/screams", (_: Request, res: Response) => {
     db.collection("screams")
         .orderBy("createdAt", "desc")
         .get()
@@ -38,10 +38,45 @@ app.get("/screams", (req: Request, res: Response) => {
         .catch((err) => console.error(err));
 });
 
-app.post("/scream", (req: Request, res: Response) => {
+const FirebaseAuth = (req: Request, res: Response, next: NextFunction) => {
+    let idToken;
+    if (
+        req.headers.authorization &&
+        req.headers.authorization.startsWith("Bearer ")
+    ) {
+        idToken = req.headers.authorization.split("Bearer ")[1];
+    } else {
+        return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    admin
+        .auth()
+        .verifyIdToken(idToken)
+        .then((decodedToken) => {
+            req.user = decodedToken;
+            return db
+                .collection("users")
+                .where("userId", "==", req.user.uid)
+                .limit(1)
+                .get();
+        })
+        .then((data) => {
+            req.user.username = data.docs[0].data().username;
+            return next();
+        })
+        .catch((err) => {
+            console.error(`Error while verifying token ${err}`);
+            return res.status(403).json(err);
+        });
+};
+
+app.post("/scream", FirebaseAuth, (req: Request, res: Response) => {
+    if (isEmpty(req.body.body))
+        return res.status(400).json({ body: "Body must not be empty" });
+
     const newScream = {
         body: req.body.body,
-        username: req.body.username,
+        username: req.user.username,
         createdAt: new Date().toISOString()
     };
 
@@ -56,7 +91,6 @@ app.post("/scream", (req: Request, res: Response) => {
         });
 });
 
-// @ts-ignore
 // Signup Route
 app.post("/signup", (req: Request, res: Response) => {
     const newUser = {
@@ -130,7 +164,6 @@ app.post("/signup", (req: Request, res: Response) => {
         });
 });
 
-// @ts-ignore
 app.post("/login", (req: Request, res: Response) => {
     const user = {
         email: req.body.email,

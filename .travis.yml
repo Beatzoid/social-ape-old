@@ -6,4 +6,4 @@ install:
     - cd functions/functions
     - yarn install --ignore-engines
 script:
-    - cd functions/functions && yarn build
+    - yarn build

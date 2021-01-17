@@ -28,4 +28,4 @@ jobs:
             - name: Compile Typescript
               uses: icrawl/action-tsc@v1
               with:
-                  project: functions/functions/
+                  project: functions/functions

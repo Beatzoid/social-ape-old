@@ -25,5 +25,7 @@ jobs:
                   node-version: ${{ matrix.node-version }}
             - name: Install Dependencies
               run: cd functions/functions && yarn install --ignore-engines
-            - name: Compile Typescript
-              run: cd functions/functions && yarn build
+            - name: tsc compile
+              uses: iCrawl/action-tsc@v1
+              with:
+                  project: functions/functions/tsconfig.json

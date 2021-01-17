@@ -1,28 +1,30 @@
-const functions = require("firebase-functions");
+import * as functions from "firebase-functions";
 
 const app = require("express")();
-const admin = require("firebase-admin");
+import { Request, Response } from "express";
+
+import admin from "firebase-admin";
 admin.initializeApp();
 
-const firebase = require("firebase");
-const config = require("./utils/config");
+import firebase from "firebase";
+import config from "./utils/config";
 firebase.initializeApp(config);
 
 const db = admin.firestore();
 
 // Helper Functions
-const isEmpty = (string) => string.trim() === "";
-const isEmail = (email) =>
+const isEmpty = (string: String) => string.trim() === "";
+const isEmail = (email: String) =>
     email.match(
         /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
     );
 
-app.get("/screams", (req, res) => {
+app.get("/screams", (req: Request, res: Response) => {
     db.collection("screams")
         .orderBy("createdAt", "desc")
         .get()
         .then((data) => {
-            const screams = [];
+            const screams: any = [];
             data.forEach((doc) => {
                 screams.push({
                     screamId: doc.id,
@@ -36,7 +38,7 @@ app.get("/screams", (req, res) => {
         .catch((err) => console.error(err));
 });
 
-app.post("/scream", (req, res) => {
+app.post("/scream", (req: Request, res: Response) => {
     const newScream = {
         body: req.body.body,
         username: req.body.username,
@@ -54,8 +56,9 @@ app.post("/scream", (req, res) => {
         });
 });
 
+// @ts-ignore
 // Signup Route
-app.post("/signup", (req, res) => {
+app.post("/signup", (req: Request, res: Response) => {
     const newUser = {
         email: req.body.email,
         password: req.body.password,
@@ -63,7 +66,7 @@ app.post("/signup", (req, res) => {
         username: req.body.username
     };
 
-    let errors = {};
+    let errors: any = {};
 
     if (isEmpty(newUser.email)) {
         errors.email = "Must not be empty";
@@ -80,9 +83,10 @@ app.post("/signup", (req, res) => {
 
     // TODO: Validate Data
 
-    let token, userId;
+    let token: any, userId: any;
     db.doc(`/users/${newUser.username}`)
         .get()
+        // @ts-ignore
         .then((doc) => {
             if (doc.exists) {
                 return res
@@ -97,7 +101,7 @@ app.post("/signup", (req, res) => {
                     );
             }
         })
-        .then((data) => {
+        .then((data: any) => {
             userId = data.user.uid;
             return data.user.getIdToken();
         })
@@ -126,13 +130,14 @@ app.post("/signup", (req, res) => {
         });
 });
 
-app.post("/login", (req, res) => {
+// @ts-ignore
+app.post("/login", (req: Request, res: Response) => {
     const user = {
         email: req.body.email,
         password: req.body.password
     };
 
-    let errors = {};
+    let errors: any = {};
 
     if (isEmpty(user.email)) errors.email = "Must not be empty";
     if (isEmpty(user.password)) errors.password = "Must not be empty";
@@ -142,7 +147,7 @@ app.post("/login", (req, res) => {
     firebase
         .auth()
         .signInWithEmailAndPassword(user.email, user.password)
-        .then((data) => data.user.getIdToken())
+        .then((data) => data?.user?.getIdToken())
         .then((token) => res.json({ token }))
         .catch((err) => {
             console.log(err);

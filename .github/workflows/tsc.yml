@@ -26,6 +26,4 @@ jobs:
             - name: Install Dependencies
               run: cd functions/functions && yarn install --ignore-engines
             - name: Compile Typescript
-              uses: icrawl/action-tsc@v1
-              with:
-                  project: functions/functions
+              run: cd functions/functions && yarn build

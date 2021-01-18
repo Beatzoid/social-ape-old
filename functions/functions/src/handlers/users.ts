@@ -1,14 +1,18 @@
 import { Request, Response } from "express";
-import { admin, db } from "../utils/admin";
-import { isEmail, isEmpty } from "../utils/validators";
-import firebase from "../utils/misc";
-import config from "../utils/config";
 import BusBoy from "busboy";
 import path from "path";
 import os from "os";
 import fs from "fs";
+
+import { admin, db } from "../utils/admin";
+import { isEmail, isEmpty, reduceUserDetails } from "../utils/validators";
+import firebase from "../utils/misc";
+import config from "../utils/config";
+
+// Fixes error, don't remove
 (global as any).XMLHttpRequest = require("xhr2");
 
+// Register
 export const signupRoute = (req: Request, res: Response) => {
     const newUser = {
         email: req.body.email,
@@ -82,6 +86,7 @@ export const signupRoute = (req: Request, res: Response) => {
         });
 };
 
+// Login
 export const loginRoute = (req: Request, res: Response) => {
     const user = {
         email: req.body.email,
@@ -110,6 +115,50 @@ export const loginRoute = (req: Request, res: Response) => {
         });
 };
 
+// Add User Details
+export const addUserDetails = (req: Request, res: Response) => {
+    let userDetails = reduceUserDetails(req.body);
+
+    db.doc(`/users/${req.user.username}`)
+        .update(userDetails)
+        .then(() => {
+            return res.json({ message: "Details updated successfully" });
+        })
+        .catch((err) => {
+            console.error(err);
+            return res.status(500).json({ error: err.code });
+        });
+};
+
+// Get Own User Details
+export const getAuthenticatedUser = (req: Request, res: Response) => {
+    let userData: any = {};
+
+    db.doc(`/users/${req.user.username}`)
+        .get()
+        .then((doc) => {
+            if (doc.exists) {
+                userData.credentials = doc.data();
+                return db
+                    .collection("likes")
+                    .where("username", "==", req.user.username)
+                    .get();
+            }
+        })
+        .then((data) => {
+            userData.likes = [];
+            data?.forEach((doc) => {
+                userData.likes.push(doc.data());
+            });
+            return res.json(userData);
+        })
+        .catch((err) => {
+            console.error(err);
+            return res.status(500).json({ error: err.code });
+        });
+};
+
+// Update a User Profile Image
 export const uploadImage = (req: Request, res: Response) => {
     const busboy = new BusBoy({ headers: req.headers });
     let imageFileName: any;

@@ -1,7 +1,12 @@
 import * as functions from "firebase-functions";
 
 // Handlers
-import { createScream, getAllScreams } from "./handlers/screams";
+import {
+    createScream,
+    getAllScreams,
+    getScream,
+    commentOnScream
+} from "./handlers/screams";
 import {
     loginRoute,
     signupRoute,
@@ -17,11 +22,16 @@ const app = require("express")();
 // Scream Routes
 app.get("/screams", getAllScreams);
 app.post("/scream", FirebaseAuth, createScream);
+app.get("/scream/:id", getScream);
+app.post("/scream/:id/comment", FirebaseAuth, commentOnScream);
+// TODO: Delete a scream
+// TODO: Like a scream
+// TODO: Unlike a scream
 
 // User Routes
 app.post("/user/image", FirebaseAuth, uploadImage);
 app.post("/user", FirebaseAuth, addUserDetails);
-app.get("/user", FirebaseAuth, getAuthenticatedUser)
+app.get("/user", FirebaseAuth, getAuthenticatedUser);
 
 // Auth Routes
 app.post("/signup", signupRoute);

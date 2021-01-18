@@ -110,7 +110,9 @@ export const loginRoute = (req: Request, res: Response) => {
             if (err.code === "auth/wrong-password")
                 return res.status(403).json({ general: "Wrong credentials" });
 
-            return res.status(500).json({ error: err.code });
+            return res
+                .status(500)
+                .json({ error: "Somethign went wrong, please try again" });
         });
 };
 

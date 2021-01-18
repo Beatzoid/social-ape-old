@@ -14,7 +14,8 @@ export const getAllScreams = (_: Request, res: Response) => {
                     screamId: doc.id,
                     body: doc.data().body,
                     username: doc.data().username,
-                    createdAt: doc.data().createdAt
+                    createdAt: doc.data().createdAt,
+                    userImage: doc.data().userImage
                 });
             });
             return res.json(screams);
@@ -78,7 +79,7 @@ export const getScream = (req: Request, res: Response) => {
 
 export const commentOnScream = (req: Request, res: Response) => {
     if (isEmpty(req.body.body))
-        return res.status(400).json({ error: "Cannot be empty" });
+        return res.status(400).json({ comment: "Cannot be empty" });
 
     const newComment = {
         body: req.body.body,

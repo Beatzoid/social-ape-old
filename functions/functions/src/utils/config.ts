@@ -1,4 +1,4 @@
-const firebaseConfig = {
+const firebaseConfig: any = {
     // Place your firebase config here
 };
 

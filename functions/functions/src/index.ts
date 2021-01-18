@@ -5,7 +5,10 @@ import {
     createScream,
     getAllScreams,
     getScream,
-    commentOnScream
+    commentOnScream,
+    likeScream,
+    unlikeScream,
+    deleteScream
 } from "./handlers/screams";
 import {
     loginRoute,
@@ -24,9 +27,9 @@ app.get("/screams", getAllScreams);
 app.post("/scream", FirebaseAuth, createScream);
 app.get("/scream/:id", getScream);
 app.post("/scream/:id/comment", FirebaseAuth, commentOnScream);
-// TODO: Delete a scream
-// TODO: Like a scream
-// TODO: Unlike a scream
+app.get("/scream/:id/like", FirebaseAuth, likeScream);
+app.get("/scream/:id/unlike", FirebaseAuth, unlikeScream);
+app.delete("/scream/:id", FirebaseAuth, deleteScream)
 
 // User Routes
 app.post("/user/image", FirebaseAuth, uploadImage);

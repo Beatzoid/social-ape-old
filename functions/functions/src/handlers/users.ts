@@ -41,12 +41,11 @@ export const signupRoute = (req: Request, res: Response) => {
     let token: any, userId: any;
     db.doc(`/users/${newUser.username}`)
         .get()
-        // @ts-ignore
         .then((doc) => {
             if (doc.exists) {
-                return res
-                    .status(400)
-                    .json({ username: "This username is already taken" });
+                return res.status(400).json({
+                    username: "This username is already taken"
+                }) as unknown;
             } else {
                 return firebase
                     .auth()
@@ -211,6 +210,5 @@ export const uploadImage = (req: Request, res: Response) => {
             });
     });
 
-    // @ts-ignore
-    busboy.end(req.rawBody);
+    busboy.end((req as any).rawBody);
 };

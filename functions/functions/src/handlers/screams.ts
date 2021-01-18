@@ -1,5 +1,6 @@
 import { db } from "../utils/admin";
 import { Request, Response } from "express";
+import { QuerySnapshot, DocumentData } from "@google-cloud/firestore";
 import { isEmpty } from "../utils/validators";
 
 export const getAllScreams = (_: Request, res: Response) => {
@@ -51,22 +52,20 @@ export const getScream = (req: Request, res: Response) => {
     let screamData: any = {};
     db.doc(`/screams/${req.params.id}`)
         .get()
-        // @ts-ignore
         .then((doc) => {
             if (!doc.exists)
                 return res.status(404).json({ error: "Scream not found" });
             screamData = doc.data();
             screamData.screamId = doc.id;
-            return db
+            return (db
                 .collection(`comments`)
                 .orderBy("createdAt", "desc")
                 .where("screamId", "==", req.params.id)
-                .get();
+                .get() as unknown) as QuerySnapshot<DocumentData>;
         })
-        .then((data) => {
+        .then((data: any) => {
             screamData.comments = [];
-            // @ts-ignore
-            data.forEach((doc) => {
+            data.forEach((doc: any) => {
                 screamData.comments.push(doc.data());
             });
             return res.json(screamData);
@@ -91,10 +90,11 @@ export const commentOnScream = (req: Request, res: Response) => {
 
     db.doc(`/screams/${req.params.id}`)
         .get()
-        // @ts-ignore
         .then((doc) => {
             if (!doc.exists) {
-                return res.status(404).json({ error: "Scream not found" });
+                return res
+                    .status(404)
+                    .json({ error: "Scream not found" }) as any;
             }
             return doc.ref.update({
                 commentCount: doc?.data()?.commentCount + 1
@@ -217,10 +217,11 @@ export const deleteScream = (req: Request, res: Response) => {
     const document = db.doc(`/screams/${req.params.id}`);
     document
         .get()
-        // @ts-ignore
         .then((doc) => {
             if (!doc.exists) {
-                return res.status(404).json({ error: "Scream not found" });
+                return res
+                    .status(404)
+                    .json({ error: "Scream not found" }) as unknown;
             }
 
             if (doc?.data()?.username !== req.user.username) {

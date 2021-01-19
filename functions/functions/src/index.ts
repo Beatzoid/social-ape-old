@@ -21,9 +21,11 @@ import {
 } from "./handlers/users";
 import { db } from "./utils/admin";
 import { FirebaseAuth } from "./utils/middleware";
+import cors from "cors";
 
 // Express
 const app = require("express")();
+app.use(cors());
 
 // Scream Routes
 app.get("/screams", getAllScreams);

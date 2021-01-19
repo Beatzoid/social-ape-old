@@ -247,7 +247,7 @@ export const uploadImage = (req: Request, res: Response) => {
             .storage()
             .bucket()
             .upload(imageToBeUploaded.filePath, {
-                resumable: true,
+                resumable: false,
                 metadata: {
                     metadata: {
                         contentType: imageToBeUploaded.mimetype

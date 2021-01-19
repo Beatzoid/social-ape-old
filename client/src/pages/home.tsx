@@ -13,7 +13,6 @@ class Home extends Component {
         axios
             .get("/screams")
             .then((res) => {
-                console.log(res.data);
                 this.setState({
                     screams: res.data
                 });
@@ -24,7 +23,7 @@ class Home extends Component {
     render() {
         const recentScreamsMarkup = this.state.screams ? (
             this?.state?.screams?.map((scream: any) => (
-                <Scream scream={scream} key={scream.id} />  
+                <Scream scream={scream} key={scream.screamId} />
             ))
         ) : (
             <p>Loading...</p>

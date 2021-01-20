@@ -12,18 +12,22 @@ import Signup from "./pages/signup";
 import Navbar from "./components/Navbar";
 import themeFile from "./utils/theme";
 import AuthRoute from "./utils/AuthRoute";
+import { getUserData, logoutUser } from "./redux/actions/userActions";
+import { SET_AUTHENTICATED } from "./redux/types";
+import axios from "axios";
 
 const theme = createMuiTheme(themeFile);
 
-let authenticated: boolean;
 const token = localStorage.FBIdToken;
 if (token) {
     const decodedToken: any = jwtDecode(token);
     if (decodedToken.exp * 1000 < Date.now()) {
+        store.dispatch<any>(logoutUser());
         window.location.href = "/login";
-        authenticated = false;
     } else {
-        authenticated = true;
+        store.dispatch({ type: SET_AUTHENTICATED });
+        axios.defaults.headers.common["Authorization"] = token;
+        store.dispatch<any>(getUserData());
     }
 }
 
@@ -42,14 +46,12 @@ function App() {
                                     exact
                                     path="/login"
                                     component={Login}
-                                    authenticated={authenticated}
                                 />
                                 <AuthRoute
                                     // @ts-ignore
                                     exact
                                     path="/signup"
                                     component={Signup}
-                                    authenticated={authenticated}
                                 />
                             </Switch>
                         </div>

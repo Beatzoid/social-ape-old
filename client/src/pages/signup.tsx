@@ -7,8 +7,9 @@ import Typography from "@material-ui/core/Typography";
 import TextField from "@material-ui/core/TextField";
 import Button from "@material-ui/core/Button";
 import CircularProgress from "@material-ui/core/CircularProgress";
-import axios from "axios";
 import { Link } from "react-router-dom";
+import { connect } from "react-redux";
+import { signupUser } from "../redux/actions/userActions";
 
 const styles = (theme: any) => ({
     ...theme.loginRegisterStyles
@@ -18,7 +19,7 @@ interface RegisterState {
     [key: string]: any;
 }
 
-class Register extends Component<{}, RegisterState> {
+class Signup extends Component<{}, RegisterState> {
     constructor() {
         super({});
         this.state = {
@@ -26,9 +27,14 @@ class Register extends Component<{}, RegisterState> {
             password: "",
             confirmPassword: "",
             username: "",
-            loading: false,
             errors: {}
         } as any;
+    }
+
+    componentDidUpdate(prevProps: any) {
+        if (prevProps.UI.errors !== (this.props as any).UI.errors) {
+            this.setState({ errors: (this.props as any).UI.errors });
+        }
     }
 
     handleSubmit = (event: any) => {
@@ -36,28 +42,13 @@ class Register extends Component<{}, RegisterState> {
         this.setState({
             loading: true
         });
-        const newUserData: any = {
+        const userData: any = {
             email: this.state.email,
             password: this.state.password,
             confirmPassword: this.state.confirmPassword,
             username: this.state.username
         };
-
-        axios
-            .post("/signup", newUserData)
-            .then((res) => {
-                localStorage.setItem("FBIdToken", `Bearer ${res.data.token}`);
-                this.setState({
-                    loading: false
-                });
-                (this.props as any).history.push("/");
-            })
-            .catch((err) => {
-                this.setState({
-                    errors: err.response.data,
-                    loading: false
-                });
-            });
+        (this.props as any).signupUser(userData, (this.props as any).history);
     };
 
     handleChange = (event: any) => {
@@ -67,8 +58,11 @@ class Register extends Component<{}, RegisterState> {
     };
 
     render() {
-        const { classes } = this.props as any;
-        const { errors, loading } = this.state;
+        const {
+            classes,
+            UI: { loading }
+        } = this.props as any;
+        const { errors } = this.state;
 
         return (
             <Grid container className={classes.form}>
@@ -85,7 +79,7 @@ class Register extends Component<{}, RegisterState> {
                             type="email"
                             label="Email"
                             className={classes.textField}
-                            helperText={errors.email}
+                            helperText={errors.email || undefined}
                             error={errors.email ? true : false}
                             value={this.state.email}
                             onChange={this.handleChange}
@@ -164,8 +158,18 @@ class Register extends Component<{}, RegisterState> {
     }
 }
 
-(Register as any).propTypes = {
-    classes: PropTypes.object.isRequired
+(Signup as any).propTypes = {
+    classes: PropTypes.object.isRequired,
+    user: PropTypes.object.isRequired,
+    UI: PropTypes.object.isRequired,
+    signupUser: PropTypes.func.isRequired
 };
 
-export default withStyles(styles as any)(Register);
+const mapStateToProps = (state: any) => ({
+    user: state.user,
+    UI: state.UI
+});
+
+export default connect(mapStateToProps, { signupUser })(
+    withStyles(styles)(Signup)
+);

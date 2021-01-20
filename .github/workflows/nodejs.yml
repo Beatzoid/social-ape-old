@@ -28,7 +28,7 @@ jobs:
               run: cd functions/functions && yarn install && cd ../../client && yarn install
 
             - name: Compile Function Typescript
-            - run: cd functions/functions && yarn --ignore-engines build
+              run: cd functions/functions && yarn --ignore-engines build
 
             - name: Compile React App
-            - run: cd client && yarn build
+              run: cd client && yarn build

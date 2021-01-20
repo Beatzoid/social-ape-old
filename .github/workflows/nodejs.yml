@@ -1,8 +1,6 @@
 name: CI
 
-# Controls when the action will run.
 on:
-    # Triggers the workflow on push or pull request events but only for the master branch
     push:
         branches: [master]
     pull_request:
@@ -19,7 +17,7 @@ jobs:
 
         steps:
             - name: Checkout Repo
-            - uses: actions/checkout@v1
+              uses: actions/checkout@v1
 
             - name: Install Node
               uses: actions/setup-node@v1

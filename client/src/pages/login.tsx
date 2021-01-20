@@ -7,8 +7,9 @@ import Typography from "@material-ui/core/Typography";
 import TextField from "@material-ui/core/TextField";
 import Button from "@material-ui/core/Button";
 import CircularProgress from "@material-ui/core/CircularProgress";
-import axios from "axios";
 import { Link } from "react-router-dom";
+import { connect } from "react-redux";
+import { loginUser } from "../redux/actions/userActions";
 
 const styles = (theme: any) => ({
     ...theme.loginRegisterStyles
@@ -24,35 +25,23 @@ class Login extends Component<{}, LoginState> {
         this.state = {
             email: "",
             password: "",
-            loading: false,
             errors: {}
         } as any;
     }
 
+    componentDidUpdate(prevProps: any) {
+        if (prevProps.UI.errors !== (this.props as any).UI.errors) {
+            this.setState({ errors: (this.props as any).UI.errors });
+        }
+    }
+
     handleSubmit = (event: any) => {
         event.preventDefault();
-        this.setState({
-            loading: true
-        });
         const userData: any = {
             email: this.state.email,
             password: this.state.password
         };
-        axios
-            .post("/login", userData)
-            .then((res) => {
-                localStorage.setItem("FBIdToken", `Bearer ${res.data.token}`);
-                this.setState({
-                    loading: false
-                });
-                (this.props as any).history.push("/");
-            })
-            .catch((err) => {
-                this.setState({
-                    errors: err.response.data,
-                    loading: false
-                });
-            });
+        (this.props as any).loginUser(userData, (this.props as any).history);
     };
 
     handleChange = (event: any) => {
@@ -62,8 +51,11 @@ class Login extends Component<{}, LoginState> {
     };
 
     render() {
-        const { classes } = this.props as any;
-        const { errors, loading } = this.state;
+        const {
+            classes,
+            UI: { loading }
+        } = this.props as any;
+        const { errors } = this.state;
 
         return (
             <Grid container className={classes.form}>
@@ -80,7 +72,7 @@ class Login extends Component<{}, LoginState> {
                             type="email"
                             label="Email"
                             className={classes.textField}
-                            helperText={errors.email}
+                            helperText={errors.email || undefined}
                             error={errors.email ? true : false}
                             value={this.state.email}
                             onChange={this.handleChange}
@@ -135,7 +127,22 @@ class Login extends Component<{}, LoginState> {
 }
 
 (Login as any).propTypes = {
-    classes: PropTypes.object.isRequired
+    classes: PropTypes.object.isRequired,
+    loginUser: PropTypes.func.isRequired,
+    user: PropTypes.object.isRequired,
+    UI: PropTypes.object.isRequired
 };
 
-export default withStyles(styles as any)(Login);
+const mapStateToProps = (state: any) => ({
+    user: state.user,
+    UI: state.UI
+});
+
+const mapActionsToProps = {
+    loginUser
+};
+
+export default connect(
+    mapStateToProps,
+    mapActionsToProps
+)(withStyles(styles)(Login));

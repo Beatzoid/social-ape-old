@@ -1,1 +1,2 @@
-export default {};
+const dataReducer = {};
+export default dataReducer;

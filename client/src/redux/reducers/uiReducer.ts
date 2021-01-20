@@ -5,7 +5,7 @@ const initialState = {
     errors: null
 };
 
-export default function (state = initialState, action: any) {
+function uiReducer(state = initialState, action: any) {
     switch (action.type) {
         case SET_ERRORS:
             return {
@@ -31,3 +31,5 @@ export default function (state = initialState, action: any) {
             return state;
     }
 }
+
+export default uiReducer;

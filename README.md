@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/Beatzoid/social-ape.svg?branch=master)](https://travis-ci.com/Beatzoid/social-ape)
+![Build Status](https://github.com/Beatzoid/social-ape/workflows/CI/badge.svg?branch=master)
 
 # Social Ape
 

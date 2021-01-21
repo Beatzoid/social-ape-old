@@ -11,6 +11,10 @@ body {
     max-width: 1200px;
 }
 
+.nav-container svg {
+    color: white;
+}
+
 .nav-container {
     margin: auto;
 }

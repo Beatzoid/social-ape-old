@@ -14,6 +14,16 @@ const setAuthorizationHeader = (token: string) => {
     axios.defaults.headers.common["Authorization"] = FBToken;
 };
 
+export const uploadImage = (formData: FormData) => (dispatch: any) => {
+    dispatch({ type: LOADING_USER });
+    axios
+        .post("/user/image", formData)
+        .then(() => {
+            dispatch(getUserData());
+        })
+        .catch((err) => console.log(err));
+};
+
 export const loginUser = (userData: any, history: any) => (dispatch: any) => {
     dispatch({ type: LOADING_UI });
     axios

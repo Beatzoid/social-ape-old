@@ -119,7 +119,7 @@ class Profile extends Component {
                                     <a
                                         href={website}
                                         target="_blank"
-                                        rel="noopener noreferer"
+                                        rel="noopener noreferrer"
                                     >
                                         {" "}
                                         {website}

@@ -5,7 +5,11 @@ export const isEmail = (email: String) =>
     );
 
 export const reduceUserDetails = (data: any) => {
-    let userDetails: any = {};
+    let userDetails: any = {
+        bio: "",
+        website: "",
+        location: ""
+    };
 
     if (!isEmpty(data.bio.trim())) userDetails.bio = data.bio;
     if (!isEmpty(data.website.trim())) {

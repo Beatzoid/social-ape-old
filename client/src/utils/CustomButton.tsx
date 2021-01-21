@@ -1,7 +1,7 @@
 import Tooltip from "@material-ui/core/Tooltip";
 import IconButton from "@material-ui/core/IconButton";
 
-export default ({
+const CustomButton = ({
     children,
     onClick,
     tip,
@@ -20,3 +20,5 @@ export default ({
         </IconButton>
     </Tooltip>
 );
+
+export default CustomButton;

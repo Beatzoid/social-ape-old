@@ -24,7 +24,7 @@ module.exports = {
     plugins: ["@typescript-eslint", "import"],
     rules: {
         "max-len": ["error", 100],
-        "operator-linebreak": ["error", "before"],
+        "operator-linebreak": 0,
         curly: 0,
         "object-curly-spacing": ["error", "always"],
         "quote-props": ["error", "as-needed"],

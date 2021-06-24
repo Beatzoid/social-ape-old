@@ -1,16 +1,13 @@
-/* eslint-disable operator-linebreak */
 /* eslint-disable max-len */
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require("dotenv").config();
 
 import * as functions from "firebase-functions";
-import * as admin from "firebase-admin";
+
 import express from "express";
 
-import { initializeApp } from "firebase/app";
 import {
-    getFirestore,
     query,
     collection,
     getDocs,
@@ -26,19 +23,8 @@ import {
     signInWithEmailAndPassword
 } from "firebase/auth";
 
-const firebaseConfig = {
-    apiKey: process.env.API_KEY,
-    authDomain: process.env.AUTH_DOMAIN,
-    projectId: process.env.PROJECT_ID,
-    storageBucket: process.env.STORAGE_BUCKET,
-    messagingSenderId: process.env.MESSAGE_SENDER_ID,
-    appId: process.env.APP_ID,
-    measurementId: process.env.MEASUREMENT_ID
-};
-
-admin.initializeApp();
-const firebaseApp = initializeApp(firebaseConfig);
-const db = getFirestore(firebaseApp);
+import { FBAuth } from "./utils/FirebaseAuth";
+import { db, firebaseApp } from "./utils/admin";
 
 const app = express();
 
@@ -77,10 +63,10 @@ app.get("/screams", async (_req, res) => {
 });
 
 // Create scream
-app.post("/scream", async (req, res) => {
+app.post("/scream", FBAuth, async (req, res) => {
     const newScream = {
         body: req.body.body,
-        userHandle: req.body.userHandle,
+        userHandle: req.user.handle,
         createdAt: new Date().toISOString()
     };
 
@@ -124,8 +110,6 @@ app.post("/signup", async (req, res) => {
     if (isEmpty(newUser.handle)) errors.handle = "Must not be empty ";
 
     if (Object.keys(errors).length > 0) return res.status(400).json(errors);
-
-    // TODO Validate data
 
     const docRef = doc(db, `/users/${newUser.handle}`);
     const docSnap = await getDoc(docRef);
@@ -191,7 +175,7 @@ app.post("/login", async (req, res) => {
     const auth = getAuth(firebaseApp);
     signInWithEmailAndPassword(auth, user.email, user.password)
         .then(async (data) => {
-            const token = await data.user.getIdToken();
+            const token = await data.user.getIdToken(true);
             return res.json({ token });
         })
         .catch((err) => {

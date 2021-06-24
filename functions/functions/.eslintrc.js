@@ -25,6 +25,7 @@ module.exports = {
     rules: {
         "max-len": ["error", 100],
         "operator-linebreak": 0,
+        "@typescript-eslint/explicit-module-boundary-types": 0,
         curly: 0,
         "object-curly-spacing": ["error", "always"],
         "quote-props": ["error", "as-needed"],

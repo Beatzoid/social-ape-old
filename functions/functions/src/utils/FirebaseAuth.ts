@@ -7,11 +7,7 @@ import { admin, db } from "./admin";
 // Make sure the user is authenticated with firebase
 // and if they're not don't allow them to access
 // whatever route their trying to access
-export const FBAuth = (
-    req: Request,
-    res: Response,
-    next: NextFunction
-): any => {
+export const FBAuth = (req: Request, res: Response, next: NextFunction) => {
     let idToken;
     if (
         req.headers.authorization &&
@@ -27,7 +23,6 @@ export const FBAuth = (
         .auth()
         .verifyIdToken(idToken, true)
         .then(async (decodedToken) => {
-            console.log(decodedToken);
             req.user = decodedToken as any;
 
             const q = query(

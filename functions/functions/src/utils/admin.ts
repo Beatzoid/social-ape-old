@@ -13,8 +13,8 @@ const firebaseConfig = {
 };
 
 const firebaseApp = initializeApp(firebaseConfig);
-
 admin.initializeApp();
+
 const db = getFirestore(firebaseApp);
 
 export { admin, db, firebaseApp };

@@ -1,12 +1,15 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+import express from "express";
 
 admin.initializeApp();
+const app = express();
 
-export const getScreams = functions.https.onRequest(async (_req, res) => {
+app.get("/screams", async (_req, res) => {
     const data = (await admin
         .firestore()
         .collection("screams")
+        .orderBy("createdAt", "desc")
         .get()
         .catch((err) => {
             functions.logger.error(err);
@@ -16,30 +19,25 @@ export const getScreams = functions.https.onRequest(async (_req, res) => {
 
     const screams: FirebaseFirestore.DocumentData[] = [];
     data.forEach((doc) => {
-        screams.push(doc.data());
+        screams.push({ screamId: doc.id, ...doc.data() });
     });
 
     res.json(screams);
     return;
 });
 
-export const createScream = functions.https.onRequest(async (req, res) => {
-    if (req.method !== "POST") {
-        res.status(400).json({ error: "Method not allowed" });
-        return;
-    }
-
+app.post("/scream", async (req, res) => {
     const newScream = {
         body: req.body.body,
         userHandle: req.body.userHandle,
-        createdAt: admin.firestore.Timestamp.fromDate(new Date())
+        createdAt: new Date().toISOString()
     };
 
     const doc = (await admin
         .firestore()
         .collection("screams")
         .add(newScream)
-        .catch((err:any) => {
+        .catch((err: unknown) => {
             functions.logger.error(err);
             console.log(err);
             res.status(500).json({
@@ -52,5 +50,8 @@ export const createScream = functions.https.onRequest(async (req, res) => {
     res.json({
         message: `Document ${doc.id} created successfully`
     });
+
     return;
 });
+
+exports.api = functions.https.onRequest(app);

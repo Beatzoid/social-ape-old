@@ -1,3 +1,6 @@
+/* eslint-disable operator-linebreak */
+/* eslint-disable max-len */
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require("dotenv").config();
 
@@ -17,7 +20,11 @@ import {
     getDoc,
     DocumentData
 } from "firebase/firestore";
-import { createUserWithEmailAndPassword, getAuth } from "firebase/auth";
+import {
+    createUserWithEmailAndPassword,
+    getAuth,
+    signInWithEmailAndPassword
+} from "firebase/auth";
 
 const firebaseConfig = {
     apiKey: process.env.API_KEY,
@@ -34,6 +41,19 @@ const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
 
 const app = express();
+
+const isEmpty = (string: string) => {
+    if (string.trim() === "") return true;
+    else return false;
+};
+
+const isEmail = (email: string) => {
+    const emailRegex =
+        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
+    if (email.match(emailRegex)) return true;
+    else return false;
+};
 
 // Get all screams
 app.get("/screams", async (_req, res) => {
@@ -91,6 +111,20 @@ app.post("/signup", async (req, res) => {
         handle: req.body.handle
     };
 
+    const errors: Record<string, string> = {};
+
+    if (isEmpty(newUser.email)) errors.email = "Must not be empty ";
+    else if (!isEmail(newUser.email))
+        errors.email = "Must be a valid email address";
+
+    if (isEmpty(newUser.password)) errors.password = "Must not be empty";
+    if (newUser.password !== newUser.confirmPassword)
+        errors.confirmPassword = "Passwords must match";
+
+    if (isEmpty(newUser.handle)) errors.handle = "Must not be empty ";
+
+    if (Object.keys(errors).length > 0) return res.status(400).json(errors);
+
     // TODO Validate data
 
     const docRef = doc(db, `/users/${newUser.handle}`);
@@ -125,11 +159,11 @@ app.post("/signup", async (req, res) => {
             });
         })
         .catch((err) => {
-            functions.logger.error(err);
-            console.error(err);
             if (err.code === "auth/email-already-in-use") {
                 return res.status(400).json({ email: "Email already in use" });
             } else {
+                functions.logger.error(err);
+                console.error(err);
                 return res.status(500).json({
                     error: err.code
                 });
@@ -137,6 +171,41 @@ app.post("/signup", async (req, res) => {
         });
 
     // Only because typescript won't shut up
+    return;
+});
+
+// Login Route
+app.post("/login", async (req, res) => {
+    const user = {
+        email: req.body.email,
+        password: req.body.password
+    };
+
+    const errors: Record<string, string> = {};
+
+    if (isEmpty(user.email)) errors.email = "Must not be empty";
+    if (isEmpty(user.password)) errors.password = "Must not be empty";
+
+    if (Object.keys(errors).length > 0) return res.status(400).json(errors);
+
+    const auth = getAuth(firebaseApp);
+    signInWithEmailAndPassword(auth, user.email, user.password)
+        .then(async (data) => {
+            const token = await data.user.getIdToken();
+            return res.json({ token });
+        })
+        .catch((err) => {
+            if (err.code === "auth/wrong-password")
+                return res
+                    .status(403)
+                    .json({ general: "Incorrect login credentials" });
+            else {
+                functions.logger.error(err);
+                console.error(err);
+                return res.status(500).json({ error: err.code });
+            }
+        });
+
     return;
 });
 

@@ -3,8 +3,8 @@
     "scripts": {
         "lint": "eslint --ext .js,.ts .",
         "build": "tsc",
-        "serve": "yarn build && firebase emulators:start --only functions",
-        "shell": "yarn build && firebase functions:shell",
+        "serve": "yarn --ignore-engines build && firebase emulators:start --only functions,auth,firestore",
+        "shell": "yarn --ignore-engines && firebase functions:shell",
         "start": "yarn shell",
         "deploy": "firebase deploy --only functions",
         "logs": "firebase functions:log"
@@ -14,7 +14,9 @@
     },
     "main": "lib/index.js",
     "dependencies": {
+        "dotenv": "^10.0.0",
         "express": "^4.17.1",
+        "firebase": "^8.6.8",
         "firebase-admin": "^9.9.0",
         "firebase-functions": "^3.14.1"
     },

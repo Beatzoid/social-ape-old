@@ -5,7 +5,16 @@ import {
     getAuth,
     signInWithEmailAndPassword
 } from "firebase/auth";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import {
+    collection,
+    doc,
+    getDoc,
+    setDoc,
+    updateDoc,
+    where,
+    query,
+    getDocs
+} from "firebase/firestore";
 import { getDownloadURL, ref, getStorage } from "firebase/storage";
 
 import Busboy from "busboy";
@@ -15,7 +24,11 @@ import os from "os";
 import fs from "fs";
 
 import { admin, db, firebaseApp } from "../utils/admin";
-import { validateLogin, validateSignup } from "../utils/validators";
+import {
+    validateLogin,
+    validateSignup,
+    reduceUserDetails
+} from "../utils/validators";
 
 export const signupUser = async (req: Request, res: Response) => {
     const newUser = {
@@ -171,4 +184,50 @@ export const uploadImage = async (req: Request, res: Response) => {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     busboy.end(req.rawBody);
+};
+
+export const addUserDetails = async (req: Request, res: Response) => {
+    const userDetails = reduceUserDetails(req.body);
+
+    const userRef = doc(db, `/users/${req.user.handle}`);
+
+    updateDoc(userRef, userDetails)
+        .then(() => {
+            return res.json({ message: "Details added successfully" });
+        })
+        .catch((err) => {
+            functions.logger.error(err.message);
+            console.error(err);
+            return res.status(500).json({ error: err.code });
+        });
+};
+
+export const getAuthenticatedUser = async (req: Request, res: Response) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const userData: any = {};
+
+    const docRef = doc(db, "users", req.user.handle);
+
+    getDoc(docRef)
+        .then(async (doc) => {
+            if (doc.exists()) {
+                userData.credentials = doc.data();
+                const q = query(
+                    collection(db, "likes"),
+                    where("userHandle", "==", req.user.handle)
+                );
+
+                const data = await getDocs(q);
+                userData.likes = [];
+                data.forEach((doc) => {
+                    userData.likes.push(doc.data());
+                });
+                return res.json(userData);
+            } else return;
+        })
+        .catch((err) => {
+            functions.logger.error(err.message);
+            console.log(err);
+            return res.status(500).json({ error: err.code });
+        });
 };

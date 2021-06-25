@@ -36,3 +36,20 @@ export const validateLogin = (user: Record<string, string>) => {
 
     return errors;
 };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const reduceUserDetails = (data: any) => {
+    const userDetails: Record<string, string> = {};
+
+    userDetails.bio = data.bio;
+
+    // https://website.com -> good
+    // website.com -> http://website.com
+    if (data.website.trim().substring(0, 4) !== "http")
+        userDetails.website = `http://${data.website}`;
+    else userDetails.website = data.website;
+
+    userDetails.location = data.location;
+
+    return userDetails;
+};

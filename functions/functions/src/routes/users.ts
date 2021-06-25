@@ -132,10 +132,10 @@ export const uploadImage = async (req: Request, res: Response) => {
         const imageExtension =
             filename.split(".")[filename.split(".").length - 1];
 
-        imageFilename = `${generatedToken}.${imageExtension}`;
+        imageFilename = `${req.user.handle}-${generatedToken}.${imageExtension}`;
         const filepath = path.join(os.tmpdir(), imageFilename);
 
-        imageToBeUploaded = { filepath, mimetype };
+        imageToBeUploaded = { filepath, mimetype, imageFilename };
         file.pipe(fs.createWriteStream(filepath));
     });
 
@@ -145,6 +145,7 @@ export const uploadImage = async (req: Request, res: Response) => {
             .bucket(process.env.STORAGE_BUCKET)
             .upload(imageToBeUploaded.filepath, {
                 resumable: false,
+                destination: `images/${imageFilename}`,
                 metadata: {
                     metadata: {
                         contentType: imageToBeUploaded.mimetype,

@@ -20,9 +20,8 @@ jobs:
               with:
                   node-version: 14
 
-            # ESLint and Prettier must be in `package.json`
             - name: Install dependencies
-              run: cd functions/functions && yarn --ignore-engines install
+              run: cd functions/functions && yarn install
 
             - name: Run linters
               uses: wearerequired/lint-action@v1
@@ -30,3 +29,4 @@ jobs:
                   eslint: true
                   eslint_dir: functions/functions/
                   eslint_extensions: ts
+                  github_token: ${{ secrets.github_token }}

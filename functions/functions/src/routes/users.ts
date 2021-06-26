@@ -130,6 +130,7 @@ export const loginUser = async (req: Request, res: Response) => {
 };
 
 export const uploadImage = async (req: Request, res: Response) => {
+    console.log(req.headers["content-type"]);
     const busboy = new Busboy({ headers: req.headers });
 
     let imageFilename: string;
@@ -168,7 +169,7 @@ export const uploadImage = async (req: Request, res: Response) => {
             })
             .then(async () => {
                 // eslint-disable-next-line max-len
-                const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${process.env.STORAGE_BUCKET}/o/${imageFilename}?alt=media&token=${generatedToken}`;
+                const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${process.env.STORAGE_BUCKET}/o/images%2F${imageFilename}?alt=media&token=${generatedToken}`;
                 const userRef = doc(db, `/users/${req.user.handle}`);
 
                 await updateDoc(userRef, { imageUrl });

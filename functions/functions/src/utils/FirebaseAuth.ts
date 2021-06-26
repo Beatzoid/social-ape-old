@@ -30,9 +30,10 @@ export const FBAuth = (req: Request, res: Response, next: NextFunction) => {
                 where("userId", "==", req.user.uid),
                 limit(1)
             );
-            const docSnap = await getDocs(q);
+            const data = await getDocs(q);
 
-            req.user.handle = docSnap.docs[0].data().handle;
+            req.user.handle = data.docs[0].data().handle;
+            req.user.imageUrl = data.docs[0].data().imageUrl;
             return next();
         })
         .catch((err) => {

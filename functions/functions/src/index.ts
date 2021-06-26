@@ -7,7 +7,12 @@ import express from "express";
 import { FBAuth } from "./utils/FirebaseAuth";
 
 // Routes
-import { createScream, getAllScreams } from "./routes/screams";
+import {
+    createScream,
+    getAllScreams,
+    getScream,
+    commentOnScream
+} from "./routes/screams";
 import {
     loginUser,
     signupUser,
@@ -21,6 +26,8 @@ const app = express();
 // Scream Routes
 app.get("/screams", getAllScreams);
 app.post("/scream", FBAuth, createScream);
+app.get("/scream/:screamId", getScream);
+app.post("/scream/:screamId/comment", FBAuth, commentOnScream);
 
 // User Routes
 app.post("/signup", signupUser);

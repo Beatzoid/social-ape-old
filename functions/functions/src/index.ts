@@ -11,7 +11,10 @@ import {
     createScream,
     getAllScreams,
     getScream,
-    commentOnScream
+    commentOnScream,
+    likeScream,
+    unlikeScream,
+    deleteScream
 } from "./routes/screams";
 import {
     loginUser,
@@ -28,6 +31,9 @@ app.get("/screams", getAllScreams);
 app.post("/scream", FBAuth, createScream);
 app.get("/scream/:screamId", getScream);
 app.post("/scream/:screamId/comment", FBAuth, commentOnScream);
+app.get("/scream/:screamId/like", FBAuth, likeScream);
+app.get("/scream/:screamId/unlike", FBAuth, unlikeScream);
+app.delete("/scream/:screamId", FBAuth, deleteScream);
 
 // User Routes
 app.post("/signup", signupUser);

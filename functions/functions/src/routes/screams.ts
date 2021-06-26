@@ -2,12 +2,15 @@ import { Request, Response } from "express";
 import {
     addDoc,
     collection,
+    deleteDoc,
     doc,
     DocumentData,
     getDoc,
     getDocs,
+    limit,
     orderBy,
     query,
+    updateDoc,
     where
 } from "firebase/firestore";
 import * as functions from "firebase-functions";
@@ -39,17 +42,17 @@ export const createScream = async (req: Request, res: Response) => {
     const newScream = {
         body: req.body.body,
         userHandle: req.user.handle,
-        createdAt: new Date().toISOString()
+        userImage: req.user.imageUrl,
+        createdAt: new Date().toISOString(),
+        likeCount: 0,
+        commentCount: 0
     };
 
     addDoc(collection(db, "screams"), newScream)
         .then((document) => {
-            functions.logger.info(
-                `Document ${document.id} created successfully`
-            );
-            return res.json({
-                message: `Document ${document.id} created successfully`
-            });
+            const resScream: Record<string, unknown> = newScream;
+            resScream.screamId = document.id;
+            return res.json(resScream);
         })
         .catch((err: unknown) => {
             functions.logger.error(err);
@@ -114,6 +117,9 @@ export const commentOnScream = async (req: Request, res: Response) => {
                 return res.status(404).json({ error: "Scream not found" });
 
             await addDoc(collection(db, "comments"), newComment);
+            await updateDoc(screamRef, {
+                commentCount: doc.data().commentCount + 1
+            });
             return res.json(newComment);
         })
         .catch((err) => {
@@ -123,4 +129,133 @@ export const commentOnScream = async (req: Request, res: Response) => {
         });
 
     return;
+};
+
+export const likeScream = async (req: Request, res: Response) => {
+    // Fetch the likes document
+    // that matches the user handle
+    // and scream id match the requested ones
+    const q = query(
+        collection(db, "likes"),
+        where("userHandle", "==", req.user.handle),
+        where("screamId", "==", req.params.screamId),
+        limit(1)
+    );
+
+    // Get the document for the requested scream
+    const screamDocument = doc(db, `/screams/${req.params.screamId}`);
+
+    let screamData;
+
+    getDoc(screamDocument)
+        .then(async (screamDoc) => {
+            // If the scream doesn't exist return 404
+            if (!screamDoc.exists())
+                return res.status(404).json({ error: "Scream not found" });
+
+            // Add the scream data to the screamData object
+            screamData = screamDoc.data();
+            screamData.screamId = screamDoc.id;
+
+            // Get the likes document from the database
+            const data = await getDocs(q);
+
+            // If there is no like document
+            if (data.empty) {
+                // Create a document in the likes collection
+                await addDoc(collection(db, "likes"), {
+                    screamId: req.params.screamId,
+                    userHandle: req.user.handle
+                });
+
+                // Update the scream data in the database with the correct like count
+                screamData.likeCount++;
+                await updateDoc(screamDocument, {
+                    likeCount: screamData.likeCount
+                });
+                return res.json(screamData);
+            } else {
+                // The user already liked this scream, so
+                // return an error
+                return res.status(400).json({ error: "Scream already liked" });
+            }
+        })
+        .catch((err) => {
+            functions.logger.error(err.message);
+            console.error(err);
+            return res.status(500).json({ error: err.code });
+        });
+};
+
+export const unlikeScream = async (req: Request, res: Response) => {
+    // Fetch the likes document
+    // that matches the user handle
+    // and scream id match the requested ones
+    const q = query(
+        collection(db, "likes"),
+        where("userHandle", "==", req.user.handle),
+        where("screamId", "==", req.params.screamId),
+        limit(1)
+    );
+
+    // Get the document for the requested scream
+    const screamDocument = doc(db, `/screams/${req.params.screamId}`);
+
+    let screamData;
+
+    getDoc(screamDocument)
+        .then(async (screamDoc) => {
+            // If the scream doesn't exist return 404
+            if (!screamDoc.exists())
+                return res.status(404).json({ error: "Scream not found" });
+
+            // Add the scream data to the screamData object
+            screamData = screamDoc.data();
+            screamData.screamId = screamDoc.id;
+
+            // Get the likes document from the database
+            const data = await getDocs(q);
+
+            // If there is no like document
+            if (data.empty) {
+                // The user has not liked this screan
+                return res.status(400).json({ error: "Scream not liked" });
+            } else {
+                // Delete the like document from the database
+                await deleteDoc(doc(db, "likes", data.docs[0].id));
+
+                // Update the scream data in the database with the correct like count
+                screamData.likeCount--;
+                await updateDoc(screamDocument, {
+                    likeCount: screamData.likeCount
+                });
+                return res.json(screamData);
+            }
+        })
+        .catch((err) => {
+            functions.logger.error(err.message);
+            console.error(err);
+            return res.status(500).json({ error: err.code });
+        });
+};
+
+export const deleteScream = async (req: Request, res: Response) => {
+    const document = doc(db, `/screams/${req.params.screamId}`);
+
+    getDoc(document)
+        .then(async (doc) => {
+            if (!doc.exists())
+                return res.status(404).json({ error: "Scream not found" });
+
+            if (doc.data().userHandle !== req.user.handle)
+                return res.status(403).json({ error: "Unauthorized" });
+
+            await deleteDoc(document);
+            return res.json({ message: "Scream successfully deleted" });
+        })
+        .catch((err) => {
+            functions.logger.error(err.message);
+            console.error(err);
+            return res.status(500).json({ error: err.code });
+        });
 };

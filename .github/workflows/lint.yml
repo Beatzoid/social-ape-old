@@ -6,6 +6,10 @@ on:
     pull_request_target:
         branches: [master]
 
+permissions:
+    contents: read
+    checks: write
+
 jobs:
     run-linters:
         name: Lint
@@ -30,6 +34,7 @@ jobs:
                   eslint_dir: functions/functions/
                   eslint_extensions: ts
                   github_token: ${{ secrets.github_token }}
+                  neutral_check_on_warning: true
 
             - name: Install client dependencies
               run: cd client && yarn install
@@ -41,3 +46,4 @@ jobs:
                   eslint_dir: client/
                   eslint_extensions: ts
                   github_token: ${{ secrets.github_token }}
+                  neutral_check_on_warning: true

@@ -23,10 +23,18 @@ jobs:
             - name: Install dependencies
               run: cd functions/functions && yarn install
 
-            - name: Run linters
+            - name: Lint functions
               uses: wearerequired/lint-action@v1
               with:
                   eslint: true
                   eslint_dir: functions/functions/
+                  eslint_extensions: ts
+                  github_token: ${{ secrets.github_token }}
+
+            - name: Lint client
+              uses: wearerequired/lint-action@v1
+              with:
+                  eslint: true
+                  eslint_dir: client/
                   eslint_extensions: ts
                   github_token: ${{ secrets.github_token }}

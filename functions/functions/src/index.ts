@@ -14,14 +14,18 @@ import {
     commentOnScream,
     likeScream,
     unlikeScream,
-    deleteScream
+    deleteScream,
+    createNotification,
+    deleteNotification
 } from "./routes/screams";
 import {
     loginUser,
     signupUser,
     uploadImage,
     addUserDetails,
-    getUser
+    getAuthenticatedUser,
+    getUser,
+    markNotificatonsRead
 } from "./routes/users";
 
 const app = express();
@@ -43,6 +47,20 @@ app.post("/login", loginUser);
 
 app.post("/user/image", FBAuth, uploadImage);
 app.post("/user", FBAuth, addUserDetails);
-app.get("/user", FBAuth, getUser);
+app.get("/user", FBAuth, getAuthenticatedUser);
+app.get("/user/:handle", getUser);
+app.post("/notifications", FBAuth, markNotificatonsRead);
 
 exports.api = functions.https.onRequest(app);
+
+exports.createNotificationOnLike = functions.firestore
+    .document("likes/{id}")
+    .onCreate((snapshot) => createNotification(snapshot, "like"));
+
+exports.createNotificationOnComment = functions.firestore
+    .document("comments/{id}")
+    .onCreate((snapshot) => createNotification(snapshot, "comment"));
+
+exports.deleteNotificationOnUnlike = functions.firestore
+    .document("likes/{id}")
+    .onDelete((snapshot) => deleteNotification(snapshot));

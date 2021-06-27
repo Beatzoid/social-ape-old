@@ -14,7 +14,10 @@ import {
     where,
     query,
     getDocs,
-    DocumentData
+    DocumentData,
+    orderBy,
+    limit,
+    writeBatch
 } from "firebase/firestore";
 import { getDownloadURL, ref, getStorage } from "firebase/storage";
 
@@ -186,7 +189,7 @@ export const addUserDetails = async (req: Request, res: Response) => {
         .catch((err) => handleError(err, res));
 };
 
-export const getUser = async (req: Request, res: Response) => {
+export const getAuthenticatedUser = async (req: Request, res: Response) => {
     const userData: Record<string, unknown> = {};
 
     // Get the user from the database
@@ -206,10 +209,74 @@ export const getUser = async (req: Request, res: Response) => {
                 const likes = await getDocs(likesQuery);
                 userData.likes = [];
                 likes.forEach((like) => {
-                    (userData.likes as Array<DocumentData>).push(like.data());
+                    (userData.likes as DocumentData[]).push(like.data());
                 });
+
+                const notifications = await getDocs(
+                    query(
+                        collection(db, "notifications"),
+                        where("recipient", "==", req.user.handle),
+                        orderBy("createdAt", "desc"),
+                        limit(10)
+                    )
+                );
+
+                userData.notifications = [];
+
+                notifications.forEach((notification) => {
+                    (userData.notifications as DocumentData[]).push({
+                        ...notification.data(),
+                        notificationId: doc.id
+                    });
+                });
+
                 return res.json(userData);
             } else return;
         })
+        .catch((err) => handleError(err, res));
+};
+
+export const getUser = async (req: Request, res: Response) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const userData: any = {};
+
+    getDoc(doc(db, `/users/${req.params.handle}`))
+        .then(async (userDoc) => {
+            if (!userDoc.exists())
+                return res.status(404).json({ error: "User not found" });
+
+            userData.user = userDoc.data();
+            const screams = await getDocs(
+                query(
+                    collection(db, "screams"),
+                    where("userHandle", "==", req.params.handle),
+                    orderBy("createdAt", "desc")
+                )
+            );
+            userData.screams = [];
+            screams.forEach((scream) => {
+                userData.screams.push({
+                    ...scream.data(),
+                    screamId: scream.id
+                });
+            });
+            return res.json(userData);
+        })
+        .catch((err) => handleError(err, res));
+};
+
+export const markNotificatonsRead = async (req: Request, res: Response) => {
+    const batch = writeBatch(db);
+    req.body.forEach((notificationId: string) => {
+        batch.update(doc(db, `/notifications/${notificationId}`), {
+            read: true
+        });
+    });
+
+    batch
+        .commit()
+        .then(() =>
+            res.json({ message: "Successfully marked notifications as read" })
+        )
         .catch((err) => handleError(err, res));
 };

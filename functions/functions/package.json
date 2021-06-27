@@ -3,7 +3,7 @@
     "scripts": {
         "lint": "eslint --ext .js,.ts .",
         "build": "tsc",
-        "serve": "yarn --ignore-engines build && firebase emulators:start --only functions",
+        "serve": "yarn --ignore-engines build && firebase emulators:start --only functions,firestore",
         "shell": "yarn --ignore-engines && firebase functions:shell",
         "start": "yarn shell",
         "deploy": "firebase deploy --only functions",

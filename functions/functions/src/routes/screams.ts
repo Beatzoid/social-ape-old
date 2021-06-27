@@ -1,3 +1,4 @@
+import * as functions from "firebase-functions";
 import { Request, Response } from "express";
 import {
     addDoc,
@@ -10,6 +11,7 @@ import {
     limit,
     orderBy,
     query,
+    setDoc,
     updateDoc,
     where
 } from "firebase/firestore";
@@ -17,6 +19,7 @@ import {
 import { db } from "../utils/admin";
 import { isEmpty } from "../utils/validators";
 import { handleError } from "../utils/handleError";
+import { QueryDocumentSnapshot } from "firebase-functions/lib/providers/firestore";
 
 export const getAllScreams = async (_req: Request, res: Response) => {
     // Get all screams ordered so that
@@ -240,4 +243,35 @@ export const deleteScream = async (req: Request, res: Response) => {
             return res.json({ message: "Scream successfully deleted" });
         })
         .catch((err) => handleError(err, res));
+};
+
+export const createNotification = async (
+    snapshot: QueryDocumentSnapshot,
+    type: "comment" | "like"
+) => {
+    const screamDoc = doc(db, `/screams/${snapshot.data().screamId}`);
+
+    getDoc(screamDoc)
+        .then(async (scream) => {
+            await setDoc(doc(db, `/notifications/${snapshot.id}`), {
+                createdAt: new Date().toISOString(),
+                recipient: scream.data()?.userHandle,
+                sender: snapshot.data().userHandle,
+                type,
+                read: false,
+                screamId: scream.id
+            });
+            return;
+        })
+        .catch((err) => {
+            functions.logger.error(err.message);
+            console.error(err);
+        });
+};
+
+export const deleteNotification = async (snapshot: QueryDocumentSnapshot) => {
+    deleteDoc(doc(db, `/notifications/${snapshot.id}`)).catch((err) => {
+        functions.logger.error(err.message);
+        console.error(err);
+    });
 };

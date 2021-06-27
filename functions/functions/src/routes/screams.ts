@@ -13,8 +13,7 @@ import {
     query,
     setDoc,
     updateDoc,
-    where,
-    QueryDocumentSnapshot
+    where
 } from "firebase/firestore";
 
 import { db } from "../utils/admin";
@@ -246,7 +245,7 @@ export const deleteScream = async (req: Request, res: Response) => {
 };
 
 export const createNotification = async (
-    snapshot: QueryDocumentSnapshot,
+    snapshot: functions.firestore.QueryDocumentSnapshot,
     type: "comment" | "like"
 ) => {
     const screamDoc = doc(db, `/screams/${snapshot.data().screamId}`);
@@ -269,7 +268,9 @@ export const createNotification = async (
         });
 };
 
-export const deleteNotification = async (snapshot: QueryDocumentSnapshot) => {
+export const deleteNotification = async (
+    snapshot: functions.firestore.QueryDocumentSnapshot
+) => {
     deleteDoc(doc(db, `/notifications/${snapshot.id}`)).catch((err) => {
         functions.logger.error(err.message);
         console.error(err);

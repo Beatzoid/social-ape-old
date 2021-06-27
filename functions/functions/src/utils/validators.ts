@@ -1,3 +1,5 @@
+import { UserDetails } from "../types/interfaces";
+
 export const isEmpty = (string: string) => {
     if (string.trim() === "") return true;
     else return false;
@@ -38,7 +40,7 @@ export const validateLogin = (user: Record<string, string>) => {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const reduceUserDetails = (data: any) => {
+export const reduceUserDetails = (data: UserDetails) => {
     const userDetails: Record<string, string> = {};
 
     userDetails.bio = data.bio;

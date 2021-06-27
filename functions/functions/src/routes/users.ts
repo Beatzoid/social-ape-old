@@ -13,7 +13,8 @@ import {
     updateDoc,
     where,
     query,
-    getDocs
+    getDocs,
+    DocumentData
 } from "firebase/firestore";
 import { getDownloadURL, ref, getStorage } from "firebase/storage";
 
@@ -29,6 +30,7 @@ import {
     validateSignup,
     reduceUserDetails
 } from "../utils/validators";
+import { handleError } from "../utils/handleError";
 
 export const signupUser = async (req: Request, res: Response) => {
     const newUser = {
@@ -47,9 +49,11 @@ export const signupUser = async (req: Request, res: Response) => {
 
     const imageUrl = await getDownloadURL(ref(getStorage(), "no-img.png"));
 
+    // Try to get the user by the specified user handle
     const docRef = doc(db, `/users/${newUser.handle}`);
     const docSnap = await getDoc(docRef);
 
+    // If the above exists, return an error
     if (docSnap.exists()) {
         return res.status(400).json({ handle: "This handle is already taken" });
     }
@@ -71,7 +75,7 @@ export const signupUser = async (req: Request, res: Response) => {
 
             // Save user inside Firestore
             await setDoc(
-                doc(db, "users", userCredentials.handle),
+                doc(db, `users/${userCredentials.handle}`),
                 userCredentials
             );
 
@@ -82,17 +86,7 @@ export const signupUser = async (req: Request, res: Response) => {
                 token
             });
         })
-        .catch((err) => {
-            if (err.code === "auth/email-already-in-use") {
-                return res.status(400).json({ email: "Email already in use" });
-            } else {
-                functions.logger.error(err);
-                console.error(err);
-                return res.status(500).json({
-                    error: err.code
-                });
-            }
-        });
+        .catch((err) => handleError(err, res));
 
     // Only because typescript won't shut up
     return;
@@ -114,23 +108,12 @@ export const loginUser = async (req: Request, res: Response) => {
             const token = await data.user.getIdToken(true);
             return res.json({ token });
         })
-        .catch((err) => {
-            if (err.code === "auth/wrong-password")
-                return res
-                    .status(403)
-                    .json({ general: "Incorrect login credentials" });
-            else {
-                functions.logger.error(err);
-                console.error(err);
-                return res.status(500).json({ error: err.code });
-            }
-        });
+        .catch((err) => handleError(err, res));
 
     return;
 };
 
 export const uploadImage = async (req: Request, res: Response) => {
-    console.log(req.headers["content-type"]);
     const busboy = new Busboy({ headers: req.headers });
 
     let imageFilename: string;
@@ -140,12 +123,17 @@ export const uploadImage = async (req: Request, res: Response) => {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     busboy.on("file", (_, file, filename, __, mimetype) => {
+        // If the file is not an image type return an error
         if (!mimetype.includes("image"))
             return res.status(400).json({ error: "Unsupported file type" });
 
+        // Get the image extension
+        // image.png -> png
+        // image1.image.png -> png
         const imageExtension =
             filename.split(".")[filename.split(".").length - 1];
 
+        // Generate the image file name and temp path on the OS
         imageFilename = `${req.user.handle}-${generatedToken}.${imageExtension}`;
         const filepath = path.join(os.tmpdir(), imageFilename);
 
@@ -154,6 +142,7 @@ export const uploadImage = async (req: Request, res: Response) => {
     });
 
     busboy.on("finish", () => {
+        // Upload the file to firebase
         admin
             .storage()
             .bucket(process.env.STORAGE_BUCKET)
@@ -172,14 +161,11 @@ export const uploadImage = async (req: Request, res: Response) => {
                 const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${process.env.STORAGE_BUCKET}/o/images%2F${imageFilename}?alt=media&token=${generatedToken}`;
                 const userRef = doc(db, `/users/${req.user.handle}`);
 
+                // Update the user's image url in the database
                 await updateDoc(userRef, { imageUrl });
                 return res.json({ message: "Image uploaded successfully" });
             })
-            .catch((err) => {
-                functions.logger.error(err.message);
-                console.error(err);
-                return res.status(500).json({ error: err.code });
-            });
+            .catch((err) => handleError(err, res));
     });
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -190,45 +176,40 @@ export const uploadImage = async (req: Request, res: Response) => {
 export const addUserDetails = async (req: Request, res: Response) => {
     const userDetails = reduceUserDetails(req.body);
 
+    // Get the user from thw database
     const userRef = doc(db, `/users/${req.user.handle}`);
 
     updateDoc(userRef, userDetails)
         .then(() => {
             return res.json({ message: "Details added successfully" });
         })
-        .catch((err) => {
-            functions.logger.error(err.message);
-            console.error(err);
-            return res.status(500).json({ error: err.code });
-        });
+        .catch((err) => handleError(err, res));
 };
 
-export const getAuthenticatedUser = async (req: Request, res: Response) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const userData: any = {};
+export const getUser = async (req: Request, res: Response) => {
+    const userData: Record<string, unknown> = {};
 
-    const docRef = doc(db, "users", req.user.handle);
+    // Get the user from the database
+    const docRef = doc(db, `users/${req.user.handle}`);
 
     getDoc(docRef)
         .then(async (doc) => {
             if (doc.exists()) {
                 userData.credentials = doc.data();
-                const q = query(
+                // Get all the likes for the user
+                const likesQuery = query(
                     collection(db, "likes"),
                     where("userHandle", "==", req.user.handle)
                 );
 
-                const data = await getDocs(q);
+                // Save the likes inside the object
+                const likes = await getDocs(likesQuery);
                 userData.likes = [];
-                data.forEach((doc) => {
-                    userData.likes.push(doc.data());
+                likes.forEach((like) => {
+                    (userData.likes as Array<DocumentData>).push(like.data());
                 });
                 return res.json(userData);
             } else return;
         })
-        .catch((err) => {
-            functions.logger.error(err.message);
-            console.log(err);
-            return res.status(500).json({ error: err.code });
-        });
+        .catch((err) => handleError(err, res));
 };

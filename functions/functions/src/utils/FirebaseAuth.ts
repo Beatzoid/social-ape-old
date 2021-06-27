@@ -25,12 +25,12 @@ export const FBAuth = (req: Request, res: Response, next: NextFunction) => {
         .then(async (decodedToken) => {
             req.user = decodedToken as any;
 
-            const q = query(
+            const userQuery = query(
                 collection(db, "users"),
                 where("userId", "==", req.user.uid),
                 limit(1)
             );
-            const data = await getDocs(q);
+            const data = await getDocs(userQuery);
 
             req.user.handle = data.docs[0].data().handle;
             req.user.imageUrl = data.docs[0].data().imageUrl;

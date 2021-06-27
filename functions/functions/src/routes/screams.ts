@@ -13,15 +13,20 @@ import {
     updateDoc,
     where
 } from "firebase/firestore";
-import * as functions from "firebase-functions";
 
 import { db } from "../utils/admin";
 import { isEmpty } from "../utils/validators";
+import { handleError } from "../utils/handleError";
 
 export const getAllScreams = async (_req: Request, res: Response) => {
-    const q = query(collection(db, "screams"), orderBy("createdAt", "desc"));
+    // Get all screams ordered so that
+    // the newest are first and the oldest are last
+    const screamsQuery = query(
+        collection(db, "screams"),
+        orderBy("createdAt", "desc")
+    );
 
-    getDocs(q)
+    getDocs(screamsQuery)
         .then((data) => {
             const screams: DocumentData[] = [];
             data.forEach((doc) => {
@@ -29,13 +34,7 @@ export const getAllScreams = async (_req: Request, res: Response) => {
             });
             return res.json(screams);
         })
-        .catch((err) => {
-            functions.logger.error(err);
-            console.error(err);
-            return res.status(500).json({
-                error: "Something went wrong, please try again later"
-            });
-        });
+        .catch((err) => handleError(err, res));
 };
 
 export const createScream = async (req: Request, res: Response) => {
@@ -48,25 +47,21 @@ export const createScream = async (req: Request, res: Response) => {
         commentCount: 0
     };
 
+    // Add the above object to the screams collection
     addDoc(collection(db, "screams"), newScream)
         .then((document) => {
             const resScream: Record<string, unknown> = newScream;
             resScream.screamId = document.id;
             return res.json(resScream);
         })
-        .catch((err: unknown) => {
-            functions.logger.error(err);
-            console.error(err);
-            return res.status(500).json({
-                error: "Something went wrong, please try again later"
-            });
-        });
+        .catch((err) => handleError(err, res));
 };
 
 export const getScream = async (req: Request, res: Response) => {
     let screamData: Record<string, unknown> = {};
 
-    const screamRef = doc(db, "screams", req.params.screamId);
+    // Get the requested scream from the database
+    const screamRef = doc(db, `/screams${req.params.screamId}`);
 
     getDoc(screamRef)
         .then(async (document) => {
@@ -75,13 +70,16 @@ export const getScream = async (req: Request, res: Response) => {
 
             screamData = document.data();
             screamData.screamId = document.id;
-            const q = query(
+            // Get the comments for the specified scream
+            // and order them so that the newest are first
+            // and the oldest are last
+            const commentsQuery = query(
                 collection(db, "comments"),
                 where("screamId", "==", req.params.screamId),
                 orderBy("createdAt", "desc")
             );
 
-            const data = await getDocs(q);
+            const data = await getDocs(commentsQuery);
             screamData.comments = [];
             data.forEach((comment) => {
                 (screamData.comments as Array<DocumentData>).push(
@@ -90,11 +88,7 @@ export const getScream = async (req: Request, res: Response) => {
             });
             return res.json(screamData);
         })
-        .catch((err) => {
-            functions.logger.error(err.message);
-            console.error(err);
-            return res.status(500).json({ error: err.code });
-        });
+        .catch((err) => handleError(err, res));
 };
 
 export const commentOnScream = async (req: Request, res: Response) => {
@@ -109,24 +103,23 @@ export const commentOnScream = async (req: Request, res: Response) => {
         userImage: req.user.imageUrl
     };
 
-    const screamRef = doc(db, "screams", req.params.screamId);
+    // Get the requested scream
+    const screamRef = doc(db, `/screams/${req.params.screamId}`);
 
     getDoc(screamRef)
         .then(async (doc) => {
             if (!doc.exists())
                 return res.status(404).json({ error: "Scream not found" });
 
+            // Add the comment to the database
             await addDoc(collection(db, "comments"), newComment);
+            // Update the scream's comment count
             await updateDoc(screamRef, {
                 commentCount: doc.data().commentCount + 1
             });
             return res.json(newComment);
         })
-        .catch((err) => {
-            functions.logger.error({ error: err.code });
-            console.error(err);
-            return res.status(500).json({ error: err.code });
-        });
+        .catch((err) => handleError(err, res));
 
     return;
 };
@@ -135,7 +128,7 @@ export const likeScream = async (req: Request, res: Response) => {
     // Fetch the likes document
     // that matches the user handle
     // and scream id match the requested ones
-    const q = query(
+    const likesQuery = query(
         collection(db, "likes"),
         where("userHandle", "==", req.user.handle),
         where("screamId", "==", req.params.screamId),
@@ -158,7 +151,7 @@ export const likeScream = async (req: Request, res: Response) => {
             screamData.screamId = screamDoc.id;
 
             // Get the likes document from the database
-            const data = await getDocs(q);
+            const data = await getDocs(likesQuery);
 
             // If there is no like document
             if (data.empty) {
@@ -180,11 +173,7 @@ export const likeScream = async (req: Request, res: Response) => {
                 return res.status(400).json({ error: "Scream already liked" });
             }
         })
-        .catch((err) => {
-            functions.logger.error(err.message);
-            console.error(err);
-            return res.status(500).json({ error: err.code });
-        });
+        .catch((err) => handleError(err, res));
 };
 
 export const unlikeScream = async (req: Request, res: Response) => {
@@ -222,7 +211,7 @@ export const unlikeScream = async (req: Request, res: Response) => {
                 return res.status(400).json({ error: "Scream not liked" });
             } else {
                 // Delete the like document from the database
-                await deleteDoc(doc(db, "likes", data.docs[0].id));
+                await deleteDoc(doc(db, `likes/${data.docs[0].id}`));
 
                 // Update the scream data in the database with the correct like count
                 screamData.likeCount--;
@@ -232,14 +221,11 @@ export const unlikeScream = async (req: Request, res: Response) => {
                 return res.json(screamData);
             }
         })
-        .catch((err) => {
-            functions.logger.error(err.message);
-            console.error(err);
-            return res.status(500).json({ error: err.code });
-        });
+        .catch((err) => handleError(err, res));
 };
 
 export const deleteScream = async (req: Request, res: Response) => {
+    // Get the requested scream
     const document = doc(db, `/screams/${req.params.screamId}`);
 
     getDoc(document)
@@ -253,9 +239,5 @@ export const deleteScream = async (req: Request, res: Response) => {
             await deleteDoc(document);
             return res.json({ message: "Scream successfully deleted" });
         })
-        .catch((err) => {
-            functions.logger.error(err.message);
-            console.error(err);
-            return res.status(500).json({ error: err.code });
-        });
+        .catch((err) => handleError(err, res));
 };

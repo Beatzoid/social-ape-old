@@ -13,13 +13,13 @@ import {
     query,
     setDoc,
     updateDoc,
-    where
+    where,
+    QueryDocumentSnapshot
 } from "firebase/firestore";
 
 import { db } from "../utils/admin";
 import { isEmpty } from "../utils/validators";
 import { handleError } from "../utils/handleError";
-import { QueryDocumentSnapshot } from "firebase-functions/lib/providers/firestore";
 
 export const getAllScreams = async (_req: Request, res: Response) => {
     // Get all screams ordered so that

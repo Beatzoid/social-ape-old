@@ -11,9 +11,9 @@ import {
     limit,
     orderBy,
     query,
-    setDoc,
     updateDoc,
-    where
+    where,
+    writeBatch
 } from "firebase/firestore";
 
 import { db } from "../utils/admin";
@@ -95,7 +95,7 @@ export const getScream = async (req: Request, res: Response) => {
 
 export const commentOnScream = async (req: Request, res: Response) => {
     if (isEmpty(req.body.body))
-        return res.status(400).json({ error: "This field is required" });
+        return res.status(400).json({ comment: "This field is required" });
 
     const newComment: Record<string, string> = {
         body: req.body.body,
@@ -244,35 +244,33 @@ export const deleteScream = async (req: Request, res: Response) => {
         .catch((err) => handleError(err, res));
 };
 
-export const createNotification = async (
-    snapshot: functions.firestore.QueryDocumentSnapshot,
-    type: "comment" | "like"
-) => {
-    const screamDoc = doc(db, `/screams/${snapshot.data().screamId}`);
+export const onScreamDelete = async (context: functions.EventContext) => {
+    const screamId = context.params.screamId;
+    const batch = writeBatch(db);
 
-    getDoc(screamDoc)
-        .then(async (scream) => {
-            await setDoc(doc(db, `/notifications/${snapshot.id}`), {
-                createdAt: new Date().toISOString(),
-                recipient: scream.data()?.userHandle,
-                sender: snapshot.data().userHandle,
-                type,
-                read: false,
-                screamId: scream.id
-            });
-            return;
-        })
-        .catch((err) => {
-            functions.logger.error(err.message);
-            console.error(err);
-        });
-};
-
-export const deleteNotification = async (
-    snapshot: functions.firestore.QueryDocumentSnapshot
-) => {
-    deleteDoc(doc(db, `/notifications/${snapshot.id}`)).catch((err) => {
-        functions.logger.error(err.message);
-        console.error(err);
+    const comments = await getDocs(
+        query(collection(db, "comments"), where("screamId", "==", screamId))
+    );
+    comments.forEach((comment) => {
+        batch.delete(doc(db, `/comments/${comment.id}`));
     });
+
+    const likes = await getDocs(
+        query(collection(db, "likes"), where("screamId", "==", screamId))
+    );
+    likes.forEach((like) => {
+        batch.delete(doc(db, `/likes/${like.id}`));
+    });
+
+    const notifications = await getDocs(
+        query(
+            collection(db, "notifications"),
+            where("screamId", "==", screamId)
+        )
+    );
+    notifications.forEach((notification) => {
+        batch.delete(doc(db, `/notifications/${notification.id}`));
+    });
+
+    return batch.commit();
 };

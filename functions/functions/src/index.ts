@@ -15,8 +15,7 @@ import {
     likeScream,
     unlikeScream,
     deleteScream,
-    createNotification,
-    deleteNotification
+    onScreamDelete
 } from "./routes/screams";
 import {
     loginUser,
@@ -25,7 +24,10 @@ import {
     addUserDetails,
     getAuthenticatedUser,
     getUser,
-    markNotificatonsRead
+    markNotificatonsRead,
+    createNotification,
+    deleteNotification,
+    onUserImageChange
 } from "./routes/users";
 
 const app = express();
@@ -64,3 +66,11 @@ exports.createNotificationOnComment = functions.firestore
 exports.deleteNotificationOnUnlike = functions.firestore
     .document("likes/{id}")
     .onDelete((snapshot) => deleteNotification(snapshot));
+
+exports.onUserImageChange = functions.firestore
+    .document("/users/{userId}")
+    .onUpdate((change) => onUserImageChange(change));
+
+exports.onScreamDelete = functions.firestore
+    .document("/screams/{screamId}")
+    .onDelete((_, context) => onScreamDelete(context));

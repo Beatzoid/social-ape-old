@@ -17,7 +17,8 @@ import {
     DocumentData,
     orderBy,
     limit,
-    writeBatch
+    writeBatch,
+    deleteDoc
 } from "firebase/firestore";
 import { getDownloadURL, ref, getStorage } from "firebase/storage";
 
@@ -89,7 +90,19 @@ export const signupUser = async (req: Request, res: Response) => {
                 token
             });
         })
-        .catch((err) => handleError(err, res));
+        .catch((err) => {
+            if (err.code === "auth/email-already-in-use") {
+                return res
+                    .status(400)
+                    .json({ email: "Email is already is use" });
+            } else {
+                functions.logger.error(err.message);
+                console.error(err);
+                return res.status(500).json({
+                    general: "Something went wrong, please try again"
+                });
+            }
+        });
 
     // Only because typescript won't shut up
     return;
@@ -111,7 +124,22 @@ export const loginUser = async (req: Request, res: Response) => {
             const token = await data.user.getIdToken(true);
             return res.json({ token });
         })
-        .catch((err) => handleError(err, res));
+        .catch((err) => {
+            if (
+                err.code === "auth/wrong-password" ||
+                err.code === "auth/user-not-user"
+            ) {
+                return res
+                    .status(403)
+                    .json({ general: "Wrong credentials, please try again" });
+            } else {
+                functions.logger.error(err.message);
+                console.error(err);
+                return res.status(500).json({
+                    general: "Something went wrong, please try again later"
+                });
+            }
+        });
 
     return;
 };
@@ -280,3 +308,64 @@ export const markNotificatonsRead = async (req: Request, res: Response) => {
         )
         .catch((err) => handleError(err, res));
 };
+
+export const createNotification = async (
+    snapshot: functions.firestore.QueryDocumentSnapshot,
+    type: "comment" | "like"
+) => {
+    const screamDoc = doc(db, `/screams/${snapshot.data().screamId}`);
+
+    getDoc(screamDoc)
+        .then(async (scream) => {
+            // If the person who liked the scream isn't the poster/owner of the scream
+            if (scream.data()?.userHandle !== snapshot.data().userHandle) {
+                return setDoc(doc(db, `/notifications/${snapshot.id}`), {
+                    createdAt: new Date().toISOString(),
+                    recipient: scream.data()?.userHandle,
+                    sender: snapshot.data().userHandle,
+                    type,
+                    read: false,
+                    screamId: scream.id
+                });
+            }
+        })
+        .catch((err) => {
+            functions.logger.error(err.message);
+            console.error(err);
+        });
+};
+
+export const deleteNotification = async (
+    snapshot: functions.firestore.QueryDocumentSnapshot
+) => {
+    deleteDoc(doc(db, `/notifications/${snapshot.id}`)).catch((err) => {
+        functions.logger.error(err.message);
+        console.error(err);
+    });
+};
+
+export const onUserImageChange = async (
+    change: functions.Change<functions.firestore.QueryDocumentSnapshot>
+) => {
+    // Execute only if the user has changed their image
+    if (change.before.data().imageUrl !== change.after.data().imageUrl) {
+        const batch = writeBatch(db);
+
+        // Get all the screams the user has created
+        getDocs(
+            query(
+                collection(db, "screams"),
+                where("userHandle", "==", change.before.data().handle)
+            )
+        ).then((screams) => {
+            screams.forEach((scream) => {
+                const screamDoc = doc(db, `/screams/${scream.id}`);
+                batch.update(screamDoc, {
+                    userImage: change.after.data().imageUrl
+                });
+            });
+            return batch.commit();
+        });
+    }
+};
+

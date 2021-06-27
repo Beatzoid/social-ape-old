@@ -29,7 +29,7 @@ jobs:
                   eslint: true
                   eslint_dir: functions/functions/
                   eslint_extensions: ts
-                  github_token: ${{ secrets.WORKFLOW_TOKEN }}
+                  github_token: ${{ secrets.github_token }}
 
             - name: Install client dependencies
               run: cd client && yarn install
@@ -40,4 +40,4 @@ jobs:
                   eslint: true
                   eslint_dir: client/
                   eslint_extensions: ts
-                  github_token: ${{ secrets.WORKFLOW_TOKEN }}
+                  github_token: ${{ secrets.github_token }}

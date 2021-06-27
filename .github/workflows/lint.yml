@@ -20,7 +20,7 @@ jobs:
               with:
                   node-version: 14
 
-            - name: Install dependencies
+            - name: Install function dependencies
               run: cd functions/functions && yarn install
 
             - name: Lint functions
@@ -30,6 +30,9 @@ jobs:
                   eslint_dir: functions/functions/
                   eslint_extensions: ts
                   github_token: ${{ secrets.github_token }}
+
+            - name: Install client dependencies
+              run: cd client && yarn install
 
             - name: Lint client
               uses: wearerequired/lint-action@v1

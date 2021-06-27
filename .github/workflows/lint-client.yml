@@ -1,0 +1,44 @@
+name: Lint Client
+
+on:
+    push:
+        branches: [master]
+    pull_request_target:
+        branches: [master]
+
+permissions:
+    contents: read
+    checks: write
+
+jobs:
+    run-linters:
+        name: Lint
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Check out repository (push)
+              if: ${{ github.event_name == 'push' }}
+              uses: actions/checkout@v2
+
+            - name: Check out repository (pull_request_target)
+              if: ${{ github.event_name == 'pull_request_target' }}
+              uses: actions/checkout@v2
+              with:
+                  ref: ${{ github.event.pull_request.head.sha }}
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v2
+              with:
+                  node-version: 14
+
+            - name: Install client dependencies
+              run: cd client && yarn install
+
+            - name: Lint client
+              uses: wearerequired/lint-action@v1
+              with:
+                  eslint: true
+                  eslint_dir: client/
+                  eslint_extensions: ts
+                  github_token: ${{ secrets.github_token }}
+                  neutral_check_on_warning: true

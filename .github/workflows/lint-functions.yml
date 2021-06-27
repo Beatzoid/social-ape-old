@@ -1,4 +1,4 @@
-name: Lint
+name: Lint functions
 
 on:
     push:
@@ -39,18 +39,6 @@ jobs:
               with:
                   eslint: true
                   eslint_dir: functions/functions/
-                  eslint_extensions: ts
-                  github_token: ${{ secrets.github_token }}
-                  neutral_check_on_warning: true
-
-            - name: Install client dependencies
-              run: cd client && yarn install
-
-            - name: Lint client
-              uses: wearerequired/lint-action@v1
-              with:
-                  eslint: true
-                  eslint_dir: client/
                   eslint_extensions: ts
                   github_token: ${{ secrets.github_token }}
                   neutral_check_on_warning: true

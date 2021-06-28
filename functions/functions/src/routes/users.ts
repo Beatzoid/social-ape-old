@@ -127,7 +127,7 @@ export const loginUser = async (req: Request, res: Response) => {
         .catch((err) => {
             if (
                 err.code === "auth/wrong-password" ||
-                err.code === "auth/user-not-user"
+                err.code === "auth/user-not-found"
             ) {
                 return res
                     .status(403)
@@ -368,4 +368,3 @@ export const onUserImageChange = async (
         });
     }
 };
-

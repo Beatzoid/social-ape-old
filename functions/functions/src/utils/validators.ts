@@ -34,6 +34,7 @@ export const validateLogin = (user: Record<string, string>) => {
     const errors: Record<string, string> = {};
 
     if (isEmpty(user.email)) errors.email = "Must not be empty";
+    if (!isEmail(user.email)) errors.email = "Must be a valid email address";
     if (isEmpty(user.password)) errors.password = "Must not be empty";
 
     return errors;

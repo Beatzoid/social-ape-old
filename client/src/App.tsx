@@ -1,7 +1,6 @@
 import "./App.css";
-import { useMemo } from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
-import { ThemeProvider, createTheme, useMediaQuery } from "@material-ui/core";
+import { ThemeProvider, createTheme } from "@material-ui/core";
 
 import Home from "./pages/home";
 import Login from "./pages/login";

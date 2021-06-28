@@ -46,7 +46,7 @@ function Login({ classes }: WithStyles<typeof styles>) {
         setLoading(true);
         axios
             .post("/login", { email, password })
-            .then((res) => {
+            .then(() => {
                 setLoading(false);
                 history.push("/");
             })

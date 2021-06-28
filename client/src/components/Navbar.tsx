@@ -4,9 +4,9 @@ import { AppBar as Appbar, Toolbar, Button } from "@material-ui/core";
 
 export default function Navbar() {
     return (
-        <Appbar>
+        <Appbar color="primary">
             <Toolbar className="nav-container">
-                <Button color="inherit" component={Link} to="/home">
+                <Button color="inherit" component={Link} to="/">
                     Home
                 </Button>
                 <Button color="inherit" component={Link} to="/login">

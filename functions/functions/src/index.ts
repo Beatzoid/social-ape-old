@@ -3,6 +3,7 @@ require("dotenv").config();
 
 import * as functions from "firebase-functions";
 import express from "express";
+import cors from "cors";
 
 import { FBAuth } from "./utils/FirebaseAuth";
 
@@ -31,6 +32,8 @@ import {
 } from "./routes/users";
 
 const app = express();
+
+app.use(cors());
 
 // Scream Routes
 app.get("/screams", getAllScreams);

@@ -1,6 +1,7 @@
-import { Component } from "react";
 import "./App.css";
+import { useMemo } from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import { ThemeProvider, createTheme, useMediaQuery } from "@material-ui/core";
 
 import Home from "./pages/home";
 import Login from "./pages/login";
@@ -8,9 +9,26 @@ import Signup from "./pages/signup";
 
 import Navbar from "./components/Navbar";
 
-class App extends Component {
-    render() {
-        return (
+export default function App() {
+    const theme = createTheme({
+        palette: {
+            primary: {
+                light: "#33c9dc",
+                main: "#00bcd4",
+                dark: "#008394",
+                contrastText: "#fff"
+            },
+            secondary: {
+                light: "#ff6333",
+                main: "#ff3d00",
+                dark: "#b22a00",
+                contrastText: "#fff"
+            }
+        }
+    });
+
+    return (
+        <ThemeProvider theme={theme}>
             <div className="App">
                 <Router>
                     <Navbar />
@@ -23,8 +41,6 @@ class App extends Component {
                     </div>
                 </Router>
             </div>
-        );
-    }
+        </ThemeProvider>
+    );
 }
-
-export default App;

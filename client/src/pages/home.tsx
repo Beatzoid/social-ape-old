@@ -11,14 +11,19 @@ export default function Home() {
     const [screams, setScreams] = useState<ScreamType[]>([]);
 
     useEffect(() => {
+        let isCanceled = false;
         axios
             .get("/screams")
             .then((res) => {
-                setScreams(res.data);
+                if (!isCanceled) setScreams(res.data);
             })
             .catch((err) => {
                 console.error(err);
             });
+
+        return () => {
+            isCanceled = true;
+        };
     }, []);
 
     const recentScreamsMarkup = screams ? (

@@ -95,6 +95,13 @@ export const signupUser = async (req: Request, res: Response) => {
                 return res
                     .status(400)
                     .json({ email: "Email is already is use" });
+            } else if (err.code === "auth/weak-password") {
+                return res
+                    .status(400)
+                    .json({
+                        password:
+                            "Password length must be greater than six characters"
+                    });
             } else {
                 functions.logger.error(err.message);
                 console.error(err);

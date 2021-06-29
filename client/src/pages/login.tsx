@@ -1,40 +1,16 @@
 import { useState } from "react";
+import { Link, useHistory } from "react-router-dom";
 import { Grid, TextField, Typography } from "@material-ui/core";
 import { LoadingButton } from "@material-ui/lab";
 import { WithStyles, withStyles } from "@material-ui/styles";
 import axios from "axios";
 
 import AppIcon from "../images/icon.png";
-import { Link, useHistory } from "react-router-dom";
-
-const styles = {
-    form: {
-        textAlign: "center"
-    },
-    pageTitle: {
-        margin: "20px auto 20px auto"
-    },
-    image: {
-        margin: "10px auto 10px auto"
-    },
-    textField: {
-        margin: "10px auto 10px auto"
-    },
-    button: {
-        marginTop: 20,
-        marginBottom: 10,
-        position: "relative"
-    },
-    customError: {
-        color: "red",
-        fontSize: "0.8rem",
-        marginTop: 10
-    }
-} as const;
+import { FormStyles } from "../utils/formStyles";
 
 // interface LoginProps extends WithStyles<typeof styles> {}
 
-function Login({ classes }: WithStyles<typeof styles>) {
+function Login({ classes }: WithStyles<typeof FormStyles>) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -46,7 +22,8 @@ function Login({ classes }: WithStyles<typeof styles>) {
         setLoading(true);
         axios
             .post("/login", { email, password })
-            .then(() => {
+            .then((res) => {
+                localStorage.setItem("FBIdToken", `Bearer ${res.data.token}`);
                 setLoading(false);
                 history.push("/");
             })
@@ -121,4 +98,4 @@ function Login({ classes }: WithStyles<typeof styles>) {
     );
 }
 
-export default withStyles(styles)(Login);
+export default withStyles(FormStyles)(Login);

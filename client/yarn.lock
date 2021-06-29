@@ -5101,6 +5101,7 @@ __metadata:
     eslint: ^7.29.0
     eslint-config-google: ^0.14.0
     eslint-plugin-import: ^2.23.4
+    jwt-decode: ^3.1.2
     react: ^17.0.2
     react-app-rewired: ^2.1.8
     react-dom: ^17.0.2
@@ -10288,6 +10289,13 @@ fsevents@^1.2.7:
     array-includes: ^3.1.2
     object.assign: ^4.1.2
   checksum: 2a8033e63234d04e6ed77ac91222e2dff527f64cf70c10d2f26fda6f35dc9b78d5e3a43fc3d28df7fe0dab45294b94c9c90e58ab242ecf14e58cd39691ee0ed4
+  languageName: node
+  linkType: hard
+
+"jwt-decode@npm:^3.1.2":
+  version: 3.1.2
+  resolution: "jwt-decode@npm:3.1.2"
+  checksum: 144712f200e4ad87d8550f614cb40017b1e6f20b6b105b4184ddbd076566e85e13a015ae1af7fc85ace03768eabe5e0863fa79cb6349adea8396f9f729a93213
   languageName: node
   linkType: hard
 

@@ -7,6 +7,7 @@ on:
         branches: [master]
     pull_request_target:
         branches: [master]
+    workflow_dispatch:
 
 permissions:
     contents: read
@@ -46,7 +47,7 @@ jobs:
                       ${{ runner.os }}-yarn-
 
             - name: Install function dependencies
-              if: steps.yarn-cache.outputs.cache-hit != 'true
+              if: steps.yarn-cache.outputs.cache-hit != true
               run: cd functions/functions && yarn install
 
             - name: Lint functions

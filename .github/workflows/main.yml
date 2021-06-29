@@ -6,6 +6,7 @@ on:
         branches: [master]
     pull_request:
         branches: [master]
+    workflow_dispatch:
 
 jobs:
     build:
@@ -37,7 +38,7 @@ jobs:
                       ${{ runner.os }}-yarn-
 
             - name: Install Function Dependencies
-              if: steps.yarn-cache.outputs.cache-hit != 'true
+              if: steps.yarn-cache.outputs.cache-hit != true
               run: cd functions/functions && yarn --ignore-engines install
 
             - name: Build Functions

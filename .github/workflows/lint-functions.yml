@@ -2,7 +2,8 @@ name: Lint functions
 
 on:
     push:
-        paths: ["functions/**"]
+        paths: ["**.js", "**.ts", "functions/**"]
+
         branches: [master]
     pull_request_target:
         branches: [master]

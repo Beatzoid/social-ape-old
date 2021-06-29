@@ -2,7 +2,7 @@ name: Lint Client
 
 on:
     push:
-        paths: ["client/**"]
+        paths: ["**.js", "**.ts", "client/**"]
         branches: [master]
     pull_request_target:
         branches: [master]

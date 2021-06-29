@@ -2,7 +2,7 @@ name: Node.js CI
 
 on:
     push:
-        paths: ["**.ts", "**.js"]
+        paths: ["**.ts", "**.js", "client/**", "functions/**"]
         branches: [master]
     pull_request:
         branches: [master]
